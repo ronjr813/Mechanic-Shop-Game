@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#111">
+<title>Mechanic Shop Mobile</title>
+<style>
+:root{--bg:#101214;--card:#1b1e22;--line:#343941;--text:#f3f3f3;--muted:#aeb4bb;--accent:#f0b429;--good:#45c46a;--bad:#e15b5b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+header{position:sticky;top:0;z-index:10;background:#17191c;border-bottom:1px solid var(--line);padding:12px 14px calc(12px + env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between}
+h1{font-size:19px;margin:0}.cash{font-weight:800;font-size:18px;color:#ffd66b}
+main{max-width:720px;margin:auto;padding:12px 12px calc(30px + env(safe-area-inset-bottom))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+h2,h3{margin:0 0 9px}.small{font-size:13px;color:var(--muted)}
+.vehicle{height:190px;border-radius:11px;background:linear-gradient(#4d5359,#292d31);position:relative;overflow:hidden;margin-bottom:12px}
+.garage-line{position:absolute;bottom:30px;left:0;right:0;height:3px;background:#777}
+.truck{position:absolute;left:10%;right:8%;bottom:47px;height:67px;background:#d8d8d8;border-radius:12px 28px 7px 7px}
+.cab{position:absolute;right:3%;top:-35px;width:37%;height:67px;background:#c9c9c9;border-radius:18px 23px 3px 3px}
+.window{position:absolute;right:7%;top:-27px;width:25%;height:32px;background:#27343e;border-radius:8px}
+.wheel{position:absolute;bottom:-23px;width:54px;height:54px;border-radius:50%;background:#111;border:9px solid #777}
+.w1{left:12%}.w2{right:11%}
+button{width:100%;min-height:48px;border:0;border-radius:10px;background:#2c3137;color:white;font-size:15px;font-weight:700;padding:10px;margin:4px 0;touch-action:manipulation}
+button:active{transform:scale(.98);background:#3a4047}
+.primary{background:#c98b12;color:#111}.goodbtn{background:#28783e}.danger{background:#873333}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.grid button{margin:0}
+.status{padding:11px;border-radius:10px;background:#2c291d;border:1px solid #63531e;line-height:1.35}
+.status.good{background:#173421;border-color:#2b6e3e}.status.bad{background:#381e1e;border-color:#733939}
+.result{line-height:1.5}.code{font-family:monospace;background:#0c0d0e;padding:2px 5px;border-radius:4px}
+.log{height:145px;overflow:auto;background:#0b0c0d;border-radius:9px;padding:9px;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;color:#d4d7da}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.stat{background:#24282d;border-radius:9px;padding:9px;text-align:center}.stat b{display:block;font-size:18px}.stat span{font-size:11px;color:var(--muted)}
+.modal{position:fixed;inset:0;background:#000b;display:none;align-items:flex-end;z-index:20}.sheet{background:#1b1e22;width:100%;border-radius:18px 18px 0 0;padding:18px;max-height:80vh;overflow:auto}.show{display:flex}
+</style>
+</head>
+<body>
+<header><h1>🔧 Mechanic Shop</h1><div class="cash">$<span id="cash">500</span></div></header>
+<main>
+<section class="card">
+  <div class="small" id="jobNo">JOB #001</div>
+  <h2 id="vehicleName">2017 Pickup • 5.3L V8</h2>
+  <div class="vehicle"><div class="truck"><div class="cab"></div><div class="window"></div><div class="wheel w1"></div><div class="wheel w2"></div></div><div class="garage-line"></div></div>
+  <div id="complaint" class="result"><b>Customer:</b> “The truck runs rough and the check-engine light is on.”</div>
+  <div id="status" class="status" style="margin-top:10px">Start with an inspection.</div>
+</section>
+
+<section class="card">
+<h3>🔍 Diagnose</h3>
+<div class="grid">
+<button onclick="doAction('inspect')">Inspect</button>
+<button onclick="doAction('scan')">Scan ECU</button>
+<button onclick="doAction('battery')">Battery Test</button>
+<button onclick="doAction('coil')">Test Coil</button>
+<button onclick="doAction('plug')">Check Plug</button>
+<button onclick="doAction('injector')">Test Injector</button>
+<button onclick="doAction('wiring')">Check Wiring</button>
+<button onclick="doAction('fuel')">Fuel Test</button>
+</div>
+</section>
+
+<section class="card">
+<h3>🛠️ Repair & Finish</h3>
+<div class="grid">
+<button class="primary" onclick="repair()">Repair Fault</button>
+<button class="goodbtn" onclick="testDrive()">Test Drive</button>
+</div>
+<button onclick="newJob()">➡️ Next Customer</button>
+</section>
+
+<section class="card">
+<div class="stats">
+<div class="stat"><b id="rep">0</b><span>Reputation</span></div>
+<div class="stat"><b id="jobs">0</b><span>Jobs</span></div>
+<div class="stat"><b id="level">1</b><span>Shop Level</span></div>
+</div>
+</section>
+
+<section class="card">
+<h3>📋 Shop Log</h3>
+<div id="log" class="log"></div>
+</section>
+
+<section class="card">
+<h3>💾 Game</h3>
+<div class="grid"><button onclick="saveGame()">Save</button><button onclick="loadGame()">Load</button></div>
+<p class="small">Progress is saved in this browser on this device.</p>
+</section>
+</main>
+
+<div id="modal" class="modal"><div class="sheet"><h2 id="modalTitle"></h2><p id="modalText"></p><button class="primary" onclick="closeModal()">Continue</button></div></div>
+
+<script>
+const jobs=[
+{vehicle:"2017 Pickup • 5.3L V8",complaint:"The truck runs rough and the check-engine light is on.",code:"P0302",fault:"ignition coil",cost:145,pay:550},
+{vehicle:"2019 Silverado • 5.3L V8",complaint:"It cranks normally but sometimes won't start.",code:"P0335",fault:"crankshaft position sensor",cost:95,pay:625},
+{vehicle:"2016 F-150 • 5.0L V8",complaint:"The battery keeps going dead overnight.",code:"P0620",fault:"alternator",cost:210,pay:700},
+{vehicle:"2018 Ram 1500 • 5.7L V8",complaint:"It hesitates badly when I accelerate.",code:"P0171",fault:"vacuum leak",cost:65,pay:575},
+{vehicle:"2020 Tacoma • 3.5L V6",complaint:"The brakes feel soft and the pedal goes down too far.",code:"BRAKE",fault:"brake fluid leak",cost:80,pay:650},
+{vehicle:"2015 GMC Sierra • 6.6L Duramax",complaint:"It has low power and the diesel warning light is on.",code:"DPF",fault:"restricted DPF",cost:180,pay:900}
+];
+let state={cash:500,rep:0,jobs:0,level:1,jobIndex:0,inspected:false,scanned:false,tests:{},repaired:false,finished:false};
+let job=jobs[0];
+
+function $(id){return document.getElementById(id)}
+function log(s){$("log").innerHTML+="> "+s+"<br>";$("log").scrollTop=$("log").scrollHeight}
+function status(s,type=""){$("status").textContent=s;$("status").className="status "+type}
+function render(){
+$("cash").textContent=state.cash;$("rep").textContent=state.rep;$("jobs").textContent=state.jobs;
+state.level=1+Math.floor(state.rep/3);$("level").textContent=state.level;
+$("jobNo").textContent="JOB #"+String(state.jobIndex+1).padStart(3,"0");
+$("vehicleName").textContent=job.vehicle;$("complaint").innerHTML="<b>Customer:</b> “"+job.complaint+"”";
+}
+function inspect(){state.inspected=true;status("Inspection complete. Look for clues and then run the scanner.");log("Visual inspection completed.")}
+function scan(){if(!state.inspected){status("Inspect the vehicle first.","bad");return}state.scanned=true;state.tests.scan=true;status("ECU scan returned "+job.code+". You need to confirm the failed component.");log("ECU scan: "+job.code)}
+function doAction(a){
+if(a==="inspect"){inspect();return}
+if(!state.inspected){status("Inspect the vehicle first.","bad");return}
+if(a==="scan"){scan();return}
+if(!state.scanned){status("Run the ECU scan first.","bad");return}
+state.tests[a]=true;
+const outcomes={
+battery:["Battery test: voltage and cranking performance are normal.","Battery passes."],
+coil:["Ignition test: cylinder 2 coil output is weak.","Coil test completed."],
+plug:["Spark plug inspection: plug condition is acceptable.","Spark plug passes."],
+injector:["Injector test: pulse and resistance are within range.","Injector passes."],
+wiring:["Circuit test: power, ground and control wiring pass.","Wiring passes."],
+fuel:["Fuel pressure test: pressure is within specification.","Fuel system passes."]
+};
+if(a==="coil" && job.fault==="ignition coil"){status(outcomes[a][0],"good");log(outcomes[a][1]+" FAILED COMPONENT FOUND.");state.selected=job.fault}
+else if(a==="battery" && job.fault==="alternator"){status("Battery is low, but the battery itself tests good. Charging system needs attention.","good");log("Battery test: battery OK.");state.selected=job.fault}
+else if(a==="fuel" && job.fault==="vacuum leak"){status("Fuel trim is high. This points toward an air leak.","good");log("Fuel test suggests an intake/vacuum issue.");state.selected=job.fault}
+else if(a==="wiring" && job.fault==="crankshaft position sensor"){status("Sensor circuit is good. The sensor signal is missing.","good");log("Crank sensor wiring OK; sensor signal missing.");state.selected=job.fault}
+else if(a==="scan" && job.fault==="restricted DPF"){status("DPF restriction detected. Exhaust system needs further inspection.","good");log("DPF restriction identified.");state.selected=job.fault}
+else if(a==="plug" && job.fault==="brake fluid leak"){status("Engine ignition is unrelated. Inspect the hydraulic brake system.","good");log("Brake complaint requires hydraulic inspection.");state.selected=job.fault}
+else {status(outcomes[a]?.[0]||"Test completed.");log(outcomes[a]?.[1]||"Test completed.");}
+}
+function repair(){
+if(!state.scanned){status("Diagnose the vehicle before repairing it.","bad");return}
+if(state.selected!==job.fault){status("You haven't positively identified the failed component yet.","bad");return}
+if(state.repaired){status("Repair already completed.");return}
+if(state.cash<job.cost){status("Not enough shop cash to buy the part.","bad");return}
+state.cash-=job.cost;state.repaired=true;render();status("Repair completed. Now test-drive the vehicle.","good");log("Replaced "+job.fault+" for $"+job.cost+".")}
+function testDrive(){
+if(!state.repaired){status("The fault has not been repaired.","bad");return}
+if(state.finished){status("Job already completed.","good");return}
+state.finished=true;state.cash+=job.pay;state.rep++;state.jobs++;render();status("🎉 SUCCESS — Customer paid $"+job.pay+"!","good");log("Test drive passed. Customer paid $"+job.pay+".")}
+function newJob(){
+if(!state.finished){status("Finish the current job before taking another customer.","bad");return}
+state.jobIndex++;job=jobs[state.jobIndex%jobs.length];
+state.inspected=false;state.scanned=false;state.tests={};state.repaired=false;state.finished=false;state.selected=null;
+render();status("New customer arrived. Start with an inspection.");log("New work order opened.")}
+function saveGame(){localStorage.setItem("mechanicShopSave",JSON.stringify(state));status("Game saved on this device.","good");log("Game saved.")}
+function loadGame(){
+const s=localStorage.getItem("mechanicShopSave");
+if(!s){status("No saved game found.");return}
+state=JSON.parse(s);job=jobs[state.jobIndex%jobs.length];render();status("Saved game loaded.","good");log("Saved game loaded.")}
+function closeModal(){$("modal").classList.remove("show")}
+render();log("Shop opened. Customer is waiting.");
+</script>
+</body>
+</html>
